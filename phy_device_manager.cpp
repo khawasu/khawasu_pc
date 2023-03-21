@@ -1,7 +1,10 @@
+#include <logical_device_manager.h>
 #include "phy_device_manager.h"
 
 #include <utility>
 #include <iostream>
+
+using namespace OverlayProto;
 
 MeshProto::far_addr_t PhyDeviceManager::get_self_addr() {
     return g_fresh_mesh->self_addr;
@@ -17,7 +20,7 @@ ushort PhyDeviceManager::gen_uniq_port() {
 }
 
 void PhyDeviceManager::send_hello() {
-    //controller.send_hello_world(LogicalPacketType::HELLO_WORLD, MeshProto::BROADCAST_FAR_ADDR, LogicalProto::BROADCAST_PORT);
+    controller.send_hello_world(LogicalPacketType::HELLO_WORLD, MeshProto::BROADCAST_FAR_ADDR, LogicalProto::BROADCAST_PORT);
 }
 
 void PhyDeviceManager::handle_packet(MeshProto::far_addr_t src_phy, LogicalPacket* log, ushort size) {
@@ -157,5 +160,11 @@ std::vector<ubyte>* PhyDeviceManager::fetch_action(MeshProto::far_addr_t addr, u
         return nullptr;
 
     return fetch_action(addr, port, action->first, std::move(buffer));
+}
+
+PhyDeviceManager::PhyDeviceManager(LogicalDeviceManager* device_manager_)
+        : device_manager(device_manager_),
+          controller(DeviceController(device_manager_, DEV_CONTROLLER_NAME, DEV_CONTROLLER_PORT)) {
+    device_manager->add_device(&controller);
 }
 

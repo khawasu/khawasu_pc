@@ -5,6 +5,7 @@
 #include <preserved_property.h>
 #include "socket/socket_base.h"
 #include "interfaces/mesh_socket_interface.h"
+#include "arg_parser.h"
 
 using namespace LogicalProto;
 using namespace OverlayProto;
@@ -90,38 +91,21 @@ public:
     OVERRIDE_ACTIONS({ActionType::TOGGLE, "power_state"})
 };
 
-MeshController* g_fresh_mesh = nullptr;
-
 int main(int argc, char* argv[]) {
-    std::string socket_ip = "127.0.0.1";
-    int socket_port = 49152;
-    std::string mesh_network_name = "dev network";
-    MeshProto::far_addr_t mesh_network_addr = 24122;
-    std::string mesh_network_psk = "1234";
-
-    if(argc > 1)
-        socket_ip = argv[1];
-    if(argc > 2)
-        socket_port = std::stoi(argv[2]);
-    if(argc > 3)
-        mesh_network_name = argv[3];
-    if(argc > 4)
-        mesh_network_addr = std::stoi(argv[4]);
-    if(argc > 5)
-        mesh_network_psk = argv[5];
-
+    ArgParser argParser;
+    argParser.process(argc, argv);
 
     LogicalDeviceManager manager;
 
-    auto controller = new MeshController(mesh_network_name.c_str(), mesh_network_addr);
+    auto controller = new MeshController(argParser.network_name.c_str(), argParser.network_addr);
     g_fresh_mesh = controller;
-    controller->set_psk_password(mesh_network_psk.c_str());
+    controller->set_psk_password(argParser.network_psk.c_str());
     controller->user_stream_handler = [&manager](MeshProto::far_addr_t src_addr, const ubyte* data, ushort size) {
         printf("[%d] user_stream_handler\n", g_fresh_mesh->self_addr);
         mesh_packet_handler(src_addr, data, size, &manager);
     };
 
-    MeshSocketInterface socket_interface(socket_ip, socket_port, false);
+    MeshSocketInterface socket_interface(argParser.hostname, argParser.port, false);
     controller->add_interface(&socket_interface);
 
     OverlayPacketBuilder::log_ovl_packet_alloc =

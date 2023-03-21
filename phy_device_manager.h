@@ -6,7 +6,6 @@
 #include <climits>
 #include <mesh_protocol.h>
 #include "device_info.h"
-#include <logical_device_manager.h>
 #include <net_utils.h>
 
 #define DEV_CONTROLLER_NAME "Controller"
@@ -14,8 +13,6 @@
 #define DEV_MAN_RANGE_MAX 7000
 #define DEV_CONTROLLER_PORT 5999
 #define DEV_MAN_RESPONSE_TIMEOUT 5'000'000
-
-using namespace OverlayProto;
 
 class DeviceController : public LogicalDevice {
 public:
@@ -75,9 +72,5 @@ public:
     std::vector<ubyte>*
     fetch_action(MeshProto::far_addr_t addr, ushort port, const char* action_name, std::vector<ubyte> buffer);
 
-    explicit PhyDeviceManager(LogicalDeviceManager* device_manager_)
-            : device_manager(device_manager_),
-              controller(DeviceController(device_manager_, DEV_CONTROLLER_NAME, DEV_CONTROLLER_PORT)) {
-        device_manager->add_device(&controller);
-    }
+    explicit PhyDeviceManager(LogicalDeviceManager* device_manager_);
 };

@@ -7,6 +7,10 @@
 #include <preserved_property.h>
 #include "socket/socket_base.h"
 #include "interfaces/mesh_socket_interface.h"
+#include "arg_parser.h"
+#include "khawasu_app.h"
+
+#define KHAWASU_DEFAULT_PORT 48655
 
 using namespace LogicalProto;
 using namespace OverlayProto;
@@ -40,56 +44,53 @@ inline void mesh_packet_handler(MeshProto::far_addr_t src_phy, const ubyte* data
 }
 
 Socket sock;
-MeshController* g_fresh_mesh = nullptr;
 
 int main(int argc, char* argv[]) {
-    std::string socket_ip = "127.0.0.1";
-    int socket_port = 49152;
-    std::string mesh_network_name = "dev network";
-    MeshProto::far_addr_t mesh_network_addr = 24122;
-    std::string mesh_network_psk = "1234";
+    ArgParser argParser;
+    argParser.process(argc, argv);
 
-    if(argc > 1)
-        socket_ip = argv[1];
-    if(argc > 2)
-        socket_port = std::stoi(argv[2]);
-    if(argc > 3)
-        mesh_network_name = argv[3];
-    if(argc > 4)
-        mesh_network_addr = std::stoi(argv[4]);
-    if(argc > 5)
-        mesh_network_psk = argv[5];
+    if (!argParser.config_path.empty()) {
+        //todo: write INI parser
+        std::cout << "Load " << argParser.config_path << " config" << std::endl;
+    }
 
+    if (argParser.hostname.empty()){
+        argParser.hostname = "127.0.0.1";
+    }
 
-    LogicalDeviceManager manager;
+    if (argParser.port == 0){
+        argParser.port = KHAWASU_DEFAULT_PORT;
+    }
 
-    auto controller = new MeshController(mesh_network_name.c_str(), mesh_network_addr);
-    g_fresh_mesh = controller;
-    controller->set_psk_password(mesh_network_psk.c_str());
-    controller->user_stream_handler = [&manager](MeshProto::far_addr_t src_addr, const ubyte* data, ushort size) {
-        mesh_packet_handler(src_addr, data, size, &manager);
-    };
+    bool isStartServer = (argParser.action_type == "server");
 
-    // todo: add unixserial
-    Win32Serial serial(R"(\\.\COM3)", 115'200);
-    P2PUnsecuredShortInterface uart_interface(true, false, serial, serial);
-    Os::sleep_milliseconds(1000);
-    controller->add_interface(&uart_interface);
+    std::cout << ":: Khawasu Socket Bridge " << std::endl;
 
-    MeshSocketInterface socket_interface(socket_ip, socket_port, true);
-    controller->add_interface(&socket_interface);
+    if (isStartServer)
+        std::cout << ":: Socket Server :: " << argParser.hostname << ":" << argParser.port << std::endl;
+    else
+        std::cout << ":: Socket Client :: " << argParser.hostname << ":" << argParser.port << std::endl;
 
-    OverlayPacketBuilder::log_ovl_packet_alloc =
-            new PoolMemoryAllocator<LOG_PACKET_POOL_ALLOC_PART_SIZE, LOG_PACKET_POOL_ALLOC_COUNT>();
+    for(auto& [com_addr, com_boudrate] : argParser.com_devices)
+        std::cout << ":: COM Device :: " << com_addr << " with baudrate " << com_boudrate << std::endl;
 
+    std::cout << ":: Fresh network :: \"" << argParser.network_name << "\" by PSK with address = " << argParser.network_addr << std::endl;
 
-    //DeviceRelay r(&manager, "Wow", 1011);
-    // fixme: remove this sleep
-    Os::sleep_milliseconds(2000);
+    KhawasuApp app(argParser.network_name, argParser.network_addr, argParser.network_psk);
 
-    //manager.add_device(&r);
+    // Register interfaces
+    if (isStartServer)
+        app.register_fresh_socket_server(argParser.hostname, argParser.port);
+    else
+        app.register_fresh_socket_client(argParser.hostname, argParser.port);
 
-    std::this_thread::sleep_for(std::chrono::days(2));
+    for(auto& [com_addr, com_boudrate] : argParser.com_devices)
+        app.register_fresh_com_device(com_addr, com_boudrate);
+
+    // App loop
+    while (app.run()) {
+        Os::yield_non_starving();
+    }
 
     return 0;
 }
