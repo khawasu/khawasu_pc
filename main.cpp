@@ -51,13 +51,13 @@ int main(int argc, char* argv[]) {
     argParser.process(argc, argv);
 
     if (!argParser.config_path.empty()) {
-        std::cout << "Load " << argParser.config_path << " config" << std::endl;
+        std::cout << ":: Load " << argParser.config_path << " config" << std::endl;
 
         toml::table config;
         try {
             config = toml::parse_file(argParser.config_path);
         } catch (const toml::parse_error& err) {
-            std::cerr << "Parsing failed:\n" << err << "\n";
+            std::cerr << ":: Parsing failed:\n" << err << std::endl;
             return 1;
         }
 
