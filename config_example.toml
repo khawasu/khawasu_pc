@@ -1,0 +1,19 @@
+[fresh]
+net = "dev network"
+psk = 1234
+addr = 33221
+
+[fresh.interfaces]
+    [fresh.interfaces.socket.server]
+    type = "server"
+    host = "127.0.0.1"
+    port = 49152
+
+    [fresh.interfaces.socket.client]
+    type = "client"
+    host = "127.0.0.1"
+    port = 49151
+
+    [fresh.interfaces.com.com3]
+    path = "\\\\.\\COM3"
+    baud = 115200

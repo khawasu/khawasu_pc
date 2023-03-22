@@ -14,18 +14,28 @@ public:
 
 };
 
+struct SocketInterface {
+public:
+    bool is_server;
+    std::string hostname;
+    short port;
+
+    SocketInterface(bool isServer, std::string  hostname, short port) : is_server(isServer),
+                                                                        hostname(std::move(hostname)),
+                                                                        port(port) {}
+};
+
 class ArgParser {
     std::vector<std::string> args;
     int current_index = 0;
     int relative_index = 0;
 
 public:
-    std::string hostname;
-    ushort port = 0;
     std::string network_name;
     MeshProto::far_addr_t network_addr = 0;
     std::string network_psk;
     std::vector<ComDevice> com_devices;
+    std::vector<SocketInterface> socket_interfaces;
     std::string config_path;
     std::string action_type;
     MeshProto::far_addr_t device_addr = 0;
@@ -65,14 +75,6 @@ private:
     void processNamedArgument(){
         auto name = peek();
 
-        if (name == "--host" || name == "-h") {
-            hostname = peek();
-        }
-
-        if (name == "--port" || name == "-p") {
-            port = std::stoi(peek());
-        }
-
         if (name == "--net" || name == "-n") {
             network_name = peek();
         }
@@ -87,6 +89,10 @@ private:
 
         if (name == "--com") {
             com_devices.emplace_back(peek(), std::stoi(peek()));
+        }
+
+        if (name == "--socket"){
+            socket_interfaces.emplace_back(peek() == "server", peek(), std::stoi(peek()));
         }
 
         if (name == "--config" || name == "-c") {

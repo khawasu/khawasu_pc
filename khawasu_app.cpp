@@ -7,6 +7,8 @@ KhawasuApp::KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t fresh
                      :  fresh_network_name(std::move(freshNetworkName)), fresh_network_addr(freshNetworkAddr),
                         fresh_network_psk(std::move(freshNetworkPsk)) {
 
+    std::cout << ":: Fresh network :: \"" << fresh_network_name << "\" by PSK with address = " << fresh_network_addr << std::endl;
+
     controller = new MeshController(fresh_network_name.c_str(), fresh_network_addr);
     g_fresh_mesh = controller;
 
@@ -23,23 +25,23 @@ KhawasuApp::KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t fresh
 void KhawasuApp::register_fresh_com_device(std::string& path, int boudrate) {
     // todo: add unixserial
     Win32Serial serial(path.c_str(), boudrate);
-    P2PUnsecuredShortInterface uart_interface(true, false, serial, serial);
+    interfaces.push_back(new P2PUnsecuredShortInterface(true, false, serial, serial));
     Os::sleep_milliseconds(1000);
-    controller->add_interface(&uart_interface);
+    controller->add_interface(interfaces.back());
 
     std::cout << ":: Registered Fresh COM Device: " << path << std::endl;
 }
 
 void KhawasuApp::register_fresh_socket_server(std::string& hostname, uint16_t port) {
-    MeshSocketInterface socket_interface(hostname, port, true);
-    controller->add_interface(&socket_interface);
+    interfaces.push_back(new MeshSocketInterface(hostname, port, true));
+    controller->add_interface(interfaces.back());
 
     std::cout << ":: Registered Fresh Socket Server: " << hostname << ":" << port << std::endl;
 }
 
 void KhawasuApp::register_fresh_socket_client(std::string& hostname, uint16_t port) {
-    MeshSocketInterface socket_interface(hostname, port, false);
-    controller->add_interface(&socket_interface);
+    interfaces.push_back(new MeshSocketInterface(hostname, port, false));
+    controller->add_interface(interfaces.back());
 
     std::cout << ":: Registered Fresh Socket Client: " << hostname << ":" << port << std::endl;
 

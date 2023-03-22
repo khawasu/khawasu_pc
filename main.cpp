@@ -9,6 +9,7 @@
 #include "interfaces/mesh_socket_interface.h"
 #include "arg_parser.h"
 #include "khawasu_app.h"
+#include "thirdparties/tomlplusplus/toml.hpp"
 
 #define KHAWASU_DEFAULT_PORT 48655
 
@@ -50,39 +51,50 @@ int main(int argc, char* argv[]) {
     argParser.process(argc, argv);
 
     if (!argParser.config_path.empty()) {
-        //todo: write INI parser
         std::cout << "Load " << argParser.config_path << " config" << std::endl;
+
+        toml::table config;
+        try {
+            config = toml::parse_file(argParser.config_path);
+        } catch (const toml::parse_error& err) {
+            std::cerr << "Parsing failed:\n" << err << "\n";
+            return 1;
+        }
+
+        if (config["fresh"]["addr"].is_integer()) argParser.network_addr = config["fresh"]["addr"].value_or(0);
+        if (config["fresh"]["net"].is_string()) argParser.network_name = config["fresh"]["net"].value_or("");
+        if (config["fresh"]["psk"].is_string()) argParser.network_psk = config["fresh"]["psk"].value_or("");
+
+        auto interfaces = config["fresh"]["interfaces"].as<toml::table>();
+        for(auto& [_interface_type, _interfaces] : *interfaces){
+            auto interface_type = std::string(_interface_type.str());
+            std::transform(interface_type.begin(), interface_type.end(), interface_type.begin(), [](unsigned char c){ return std::tolower(c); });
+
+            for(auto& [key, value] : *_interfaces.as_table()) {
+                auto valueTable = *value.as_table();
+
+                if (interface_type == "socket") {
+                    argParser.socket_interfaces.emplace_back("server" == valueTable["type"],
+                                                             valueTable["host"].value_or(""),
+                                                             valueTable["port"].value_or(0));
+                } else if (interface_type == "com") {
+                    argParser.com_devices.emplace_back(valueTable["path"].value_or(""), valueTable["baud"].value_or(0));
+                }
+            }
+        }
     }
 
-    if (argParser.hostname.empty()){
-        argParser.hostname = "127.0.0.1";
-    }
-
-    if (argParser.port == 0){
-        argParser.port = KHAWASU_DEFAULT_PORT;
-    }
-
-    bool isStartServer = (argParser.action_type == "server");
-
-    std::cout << ":: Khawasu Socket Bridge " << std::endl;
-
-    if (isStartServer)
-        std::cout << ":: Socket Server :: " << argParser.hostname << ":" << argParser.port << std::endl;
-    else
-        std::cout << ":: Socket Client :: " << argParser.hostname << ":" << argParser.port << std::endl;
-
-    for(auto& [com_addr, com_boudrate] : argParser.com_devices)
-        std::cout << ":: COM Device :: " << com_addr << " with baudrate " << com_boudrate << std::endl;
-
-    std::cout << ":: Fresh network :: \"" << argParser.network_name << "\" by PSK with address = " << argParser.network_addr << std::endl;
+    std::cout << ":: Khawasu Control Tool " << std::endl;
 
     KhawasuApp app(argParser.network_name, argParser.network_addr, argParser.network_psk);
 
     // Register interfaces
-    if (isStartServer)
-        app.register_fresh_socket_server(argParser.hostname, argParser.port);
-    else
-        app.register_fresh_socket_client(argParser.hostname, argParser.port);
+    for(auto& [is_server, hostname, port] : argParser.socket_interfaces){
+        if (is_server)
+            app.register_fresh_socket_server(hostname, port);
+        else
+            app.register_fresh_socket_client(hostname, port);
+    }
 
     for(auto& [com_addr, com_boudrate] : argParser.com_devices)
         app.register_fresh_com_device(com_addr, com_boudrate);

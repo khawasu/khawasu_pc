@@ -17,6 +17,8 @@ public:
     MeshController* controller;
     LogicalDeviceManager manager;
 
+    std::vector<MeshInterface*> interfaces;
+
     KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t freshNetworkAddr, std::string freshNetworkPsk);
 
     bool run() {

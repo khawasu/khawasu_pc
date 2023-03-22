@@ -38,6 +38,9 @@ add_library(khawasu_capi SHARED c_api.cpp ${KHAWASU_PC_SRCS})
 
 target_include_directories(khawasu_pc PUBLIC "./" "socket/")
 
+# Add TomlPlusPlus
+target_include_directories(hwctrl PUBLIC thirdparties/tomlplusplus/)
+
 target_link_libraries(hwctrl PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_pc_client PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_pc PUBLIC ${KHAWASU_PC_LIBS})
