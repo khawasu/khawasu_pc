@@ -17,8 +17,6 @@ MeshSocketInterface::MeshSocketInterface(std::string addr, ushort port, bool is_
             std::terminate();
 
         auto serv_addr_u64 = self_sock.AddressU64(serv_addr);
-        std::cout << "Connected to server : " << self_sock.AddressString(serv_addr) << " " << serv_addr_u64 << std::endl;
-
 
         // todo: remove server addr hardcode
         clients[serv_addr_u64] = Client {ClientRecvBuffer(), self_sock.GetHandle()};

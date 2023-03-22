@@ -41,9 +41,6 @@ void Socket::Create(std::string addr, ushort port) {
         exit(1);
     }
 
-    printf("Socket server now listen %s:%d\n", addr.c_str(), port);
-    fflush(stdout);
-
     handle = (SocketHandle_t) (new SOCKET(_handle));
 };
 
