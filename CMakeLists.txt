@@ -46,4 +46,6 @@ target_link_libraries(khawasu_pc_client PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_pc PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_capi PUBLIC -static ${KHAWASU_PC_LIBS})
 
+target_link_options(hwctrl PUBLIC -static -static-libgcc -static-libstdc++)
+
 add_compile_options(-fdiagnostics-color=always)
