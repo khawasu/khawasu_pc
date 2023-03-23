@@ -43,6 +43,8 @@ public:
     std::string action_name;
     std::vector<std::string> action_values;
 
+    bool debug = false;
+
     void process(int argc, char* argv[]){
         for (int i=1; i<argc; ++i){
             args.emplace_back(argv[i]);
@@ -97,6 +99,10 @@ private:
 
         if (name == "--config" || name == "-c") {
             config_path = peek();
+        }
+
+        if (name == "--debug") {
+            debug = true;
         }
     }
 

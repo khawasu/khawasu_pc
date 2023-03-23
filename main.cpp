@@ -84,6 +84,23 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if(argParser.debug) {
+        std::cout << "Khawasu SDK Devices:" << std::endl;
+        for (auto& [dev_enum, dev_type]: KhawasuReflection::getAllDeviceClasses()) {
+            std::cout << "\t" << dev_type << " (" << (int) dev_enum << ")" << std::endl;
+        }
+
+        std::cout << "Khawasu SDK Actions:" << std::endl;
+        for (auto& [act_enum, act_type]: KhawasuReflection::getAllDeviceActions()) {
+            std::cout << "\t" << act_type << " (" << (int) act_enum << ")" << std::endl;
+        }
+
+        std::cout << "Khawasu SDK Action Statuses:" << std::endl;
+        for (auto& [status_enum, status_type]: KhawasuReflection::getAllDeviceActionStatuses()) {
+            std::cout << "\t" << status_type << " (" << (int) status_enum << ")" << std::endl;
+        }
+    }
+
     std::cout << ":: Khawasu Control Tool " << std::endl;
 
     KhawasuApp app(argParser.network_name, argParser.network_addr, argParser.network_psk);
@@ -101,7 +118,7 @@ int main(int argc, char* argv[]) {
 
     // App loop
     while (app.run()) {
-        Os::yield_non_starving();
+        Os::sleep_ticks(1);
     }
 
     return 0;
