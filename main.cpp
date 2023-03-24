@@ -106,6 +106,7 @@ int main(int argc, char* argv[]) {
     KhawasuApp app(argParser.network_name, argParser.network_addr, argParser.network_psk);
 
     // Register interfaces
+    // Todo: Make COM auto register fresh devices
     for(auto& [is_server, hostname, port] : argParser.socket_interfaces){
         if (is_server)
             app.register_fresh_socket_server(hostname, port);
