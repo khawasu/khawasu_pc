@@ -11,12 +11,11 @@ MeshProto::far_addr_t PhyDeviceManager::get_self_addr() {
 }
 
 ushort PhyDeviceManager::gen_uniq_port() {
-    for (ushort port = DEV_MAN_RANGE_MIN; port < DEV_MAN_RANGE_MAX; ++port) {
-        if (lookup_log(get_self_addr(), port) == nullptr)
-            return port;
-    }
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, 6);
 
-    return 0;
+    return distrib(gen);
 }
 
 void PhyDeviceManager::send_hello() {
@@ -164,7 +163,7 @@ std::vector<ubyte>* PhyDeviceManager::fetch_action(MeshProto::far_addr_t addr, u
 
 PhyDeviceManager::PhyDeviceManager(LogicalDeviceManager* device_manager_)
         : device_manager(device_manager_),
-          controller(DeviceController(device_manager_, DEV_CONTROLLER_NAME, DEV_CONTROLLER_PORT)) {
+          controller(DeviceController(device_manager_, DEV_CONTROLLER_NAME, gen_uniq_port())) {
     device_manager->add_device(&controller);
 }
 
