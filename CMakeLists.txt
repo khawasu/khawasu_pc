@@ -30,7 +30,7 @@ set(KHAWASU_PC_LIBS ${KHAWASU_PC_LIBS} fresh_static khawasu_core)
 # Add PhyDeviceManager
 set(KHAWASU_PC_SRCS ${KHAWASU_PC_SRCS} device_info.cpp phy_device_manager.cpp logical_callback_device.cpp)
 
-add_executable(hwctrl main.cpp ${KHAWASU_PC_SRCS} arg_parser.h khawasu_app.cpp khawasu_app.h)
+add_executable(hwctrl main.cpp ${KHAWASU_PC_SRCS} arg_parser.h khawasu_app.cpp khawasu_app.h config.h)
 add_executable(khawasu_pc_client main_client.cpp ${KHAWASU_PC_SRCS} arg_parser.h)
 
 add_library(khawasu_pc STATIC ${KHAWASU_PC_SRCS})

@@ -47,44 +47,20 @@ inline void mesh_packet_handler(MeshProto::far_addr_t src_phy, const ubyte* data
 Socket sock;
 
 int main(int argc, char* argv[]) {
+    Config app_config;
     ArgParser argParser;
-    argParser.process(argc, argv);
+    argParser.process(argc, argv, &app_config);
 
     if (!argParser.config_path.empty()) {
         std::cout << ":: Load " << argParser.config_path << " config" << std::endl;
 
-        toml::table config;
-        try {
-            config = toml::parse_file(argParser.config_path);
-        } catch (const toml::parse_error& err) {
-            std::cerr << ":: Parsing failed:\n" << err << std::endl;
+        if(perform_config_toml(app_config)) {
+            std::cerr << ":: Error occurred while parsing file " << argParser.config_path << std::endl;
             return 1;
-        }
-
-        if (config["fresh"]["addr"].is_integer()) argParser.network_addr = config["fresh"]["addr"].value_or(0);
-        if (config["fresh"]["net"].is_string()) argParser.network_name = config["fresh"]["net"].value_or("");
-        if (config["fresh"]["psk"].is_string()) argParser.network_psk = config["fresh"]["psk"].value_or("");
-
-        auto interfaces = config["fresh"]["interfaces"].as<toml::table>();
-        for(auto& [_interface_type, _interfaces] : *interfaces){
-            auto interface_type = std::string(_interface_type.str());
-            std::transform(interface_type.begin(), interface_type.end(), interface_type.begin(), [](unsigned char c){ return std::tolower(c); });
-
-            for(auto& [key, value] : *_interfaces.as_table()) {
-                auto valueTable = *value.as_table();
-
-                if (interface_type == "socket") {
-                    argParser.socket_interfaces.emplace_back("server" == valueTable["type"],
-                                                             valueTable["host"].value_or(""),
-                                                             valueTable["port"].value_or(0));
-                } else if (interface_type == "com") {
-                    argParser.com_devices.emplace_back(valueTable["path"].value_or(""), valueTable["baud"].value_or(0));
-                }
-            }
         }
     }
 
-    if(argParser.debug) {
+    if(app_config.debug) {
         std::cout << "Khawasu SDK Devices:" << std::endl;
         for (auto& [dev_enum, dev_type]: KhawasuReflection::getAllDeviceClasses()) {
             std::cout << "\t" << dev_type << " (" << (int) dev_enum << ")" << std::endl;
@@ -103,23 +79,23 @@ int main(int argc, char* argv[]) {
 
     std::cout << ":: Khawasu Control Tool " << std::endl;
 
-    KhawasuApp app(argParser.network_name, argParser.network_addr, argParser.network_psk);
+    KhawasuApp app(app_config.network_name, app_config.network_addr, app_config.network_psk);
 
     // Register interfaces
     // Todo: Make COM auto register fresh devices
-    for(auto& [is_server, hostname, port] : argParser.socket_interfaces){
+    for(auto& [is_server, hostname, port] : app_config.socket_interfaces){
         if (is_server)
             app.register_fresh_socket_server(hostname, port);
         else
             app.register_fresh_socket_client(hostname, port);
     }
 
-    for(auto& [com_addr, com_boudrate] : argParser.com_devices)
+    for(auto& [com_addr, com_boudrate] : app_config.com_devices)
         app.register_fresh_com_device(com_addr, com_boudrate);
 
     // App loop
     while (app.run()) {
-        Os::sleep_ticks(1);
+        Os::sleep_ticks(100);
     }
 
     return 0;
