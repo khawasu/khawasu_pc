@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
     if (!argParser.config_path.empty()) {
         std::cout << ":: Load " << argParser.config_path << " config" << std::endl;
 
-        if(perform_config_toml(app_config)) {
+        if(!perform_config_toml(app_config)) {
             std::cerr << ":: Error occurred while parsing file " << argParser.config_path << std::endl;
             return 1;
         }
