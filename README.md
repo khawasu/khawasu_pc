@@ -96,7 +96,7 @@ addr = 2 # Self-assigned network address <integer>
     # you must define path (path <string>) 
     # and boudrate (baud <integer>) this serial port
     [fresh.interfaces.com.com1]
-    path="\\.\COM1"
+    path="\\\\.\\COM1"
     boud=115200
     
 # A section about khawasu configuration
