@@ -4,6 +4,10 @@
 #include <mesh_base_interface.h>
 #include "../socket/socket_base.h"
 #include <vector>
+#include <exception>
+
+class MeshSocketInterfaceConnectionException : public std::exception
+{};
 
 struct ClientRecvBuffer {
     std::vector<ubyte> data;

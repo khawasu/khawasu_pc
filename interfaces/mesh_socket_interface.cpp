@@ -13,8 +13,8 @@ MeshSocketInterface::MeshSocketInterface(std::string addr, ushort port, bool is_
         self_sock.Create(std::move(addr), port);
     else {
         auto serv_addr = self_sock.Connect(std::move(addr), port);
-        if(serv_addr == nullptr)
-            std::terminate();
+        if(!serv_addr)
+            throw MeshSocketInterfaceConnectionException();
 
         auto serv_addr_u64 = self_sock.AddressU64(serv_addr);
 

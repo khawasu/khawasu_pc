@@ -33,17 +33,26 @@ void KhawasuApp::register_fresh_com_device(std::string& path, int boudrate) {
 }
 
 void KhawasuApp::register_fresh_socket_server(std::string& hostname, uint16_t port) {
-    interfaces.push_back(new MeshSocketInterface(hostname, port, true));
-    controller->add_interface(interfaces.back());
+    try {
+        interfaces.push_back(new MeshSocketInterface(hostname, port, true));
+        controller->add_interface(interfaces.back());
 
-    std::cout << ":: Registered Fresh Socket Server: " << hostname << ":" << port << std::endl;
+        std::cout << ":: Registered Fresh Socket Server: " << hostname << ":" << port << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << ":: Fresh Socket Server Error: " << e.what() << std::endl;
+    }
 }
 
 void KhawasuApp::register_fresh_socket_client(std::string& hostname, uint16_t port) {
-    interfaces.push_back(new MeshSocketInterface(hostname, port, false));
-    controller->add_interface(interfaces.back());
+    try {
+        interfaces.push_back(new MeshSocketInterface(hostname, port, false));
+        controller->add_interface(interfaces.back());
 
-    std::cout << ":: Registered Fresh Socket Client: " << hostname << ":" << port << std::endl;
-
+        std::cout << ":: Registered Fresh Socket Client: " << hostname << ":" << port << std::endl;
+    } catch (const MeshSocketInterfaceConnectionException& e) {
+        std::cerr << ":: Fresh Socket Server Connection error" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << ":: Fresh Socket Client Error: " << e.what() << std::endl;
+    }
 }
 
