@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <algorithm>
 #include <utility>
 #include <vector>
 #include <mesh_protocol.h>
@@ -12,7 +13,6 @@ class ArgParser {
     int relative_index = 0;
 
 public:
-    std::string config_path{};
     Config* config;
 
     void process(int argc, char* argv[], Config* app_config){
@@ -70,7 +70,7 @@ private:
         }
 
         if (name == "--config" || name == "-c") {
-            config_path = peek();
+            config->config_path = peek();
         }
 
         if (name == "--debug") {
