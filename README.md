@@ -1,3 +1,5 @@
+### Usage Khawasu PC as C++ API Examples:
+https://gist.github.com/ameharoo/15fade75188c1c116265e1ff46cd265c
 ### Example usage:
 ```bash 
 hwctrl --net "dev network" --psk "123" -a 1 --socket client 127.0.0.1 49152 \
