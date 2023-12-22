@@ -17,10 +17,12 @@ add_subdirectory(${KHAWASU_ROOT}/khawasu/khawasu_core ${CMAKE_BINARY_DIR}/khawas
 
 # link sockets
 if (WIN32)
+    message("WINDOWS detected")
     set(KHAWASU_PC_SRCS socket/winsocket.cpp)
     set(KHAWASU_PC_LIBS ws2_32 winmm)
 endif ()
 if (UNIX)
+    message("UNIX detected")
     set(KHAWASU_PC_SRCS socket/unixsocket.cpp)
 endif ()
 
@@ -46,7 +48,7 @@ target_link_libraries(khawasu_pc_client PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_pc PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_capi PUBLIC -static ${KHAWASU_PC_LIBS})
 
-target_link_options(hwctrl PUBLIC -static -static-libgcc -static-libstdc++)
+# target_link_options(hwctrl PUBLIC -static -static-libgcc -static-libstdc++)
 
 target_compile_definitions(hwctrl PUBLIC KHAWASU_ENABLE_REFLECTION)
 

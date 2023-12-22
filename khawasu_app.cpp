@@ -3,6 +3,12 @@
 
 #include <utility>
 
+#if(__unix__)
+#include "platform/p2p/unix_p2p.h"
+#elif(WIN32)
+#include "platform/p2p/win32_p2p.h"
+#endif
+
 KhawasuApp::KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t freshNetworkAddr, std::string freshNetworkPsk)
                      :  fresh_network_name(std::move(freshNetworkName)), fresh_network_addr(freshNetworkAddr),
                         fresh_network_psk(std::move(freshNetworkPsk)) {
@@ -24,7 +30,11 @@ KhawasuApp::KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t fresh
 
 void KhawasuApp::register_fresh_com_device(std::string& path, int boudrate) {
     // todo: add unixserial
+    #if(WIN32)
     Win32Serial serial(path.c_str(), boudrate);
+    #elif(__unix__)
+    UnixSerial serial(path.c_str(), boudrate);
+    #endif
     interfaces.push_back(new P2PUnsecuredShortInterface(true, false, serial, serial));
     Os::sleep_milliseconds(1000);
     controller->add_interface(interfaces.back());
