@@ -116,7 +116,7 @@ MeshInterfaceProps MeshSocketInterface::get_props() {
 void MeshSocketInterface::send_hello(MeshPhyAddrPtr phy_addr) {
     auto packet = (MeshProto::MeshPacket*) alloca(MESH_CALC_SIZE(near_hello_secure));
     net_store(packet->type, MeshProto::MeshPacketType::NEAR_HELLO);
-    memcpy(packet->near_hello_secure.network_name, controller->network_name, sizeof(controller->network_name));
+    std::memcpy(packet->near_hello_secure.network_name, controller->network_name.data(), controller->network_name.size());
 
     // For specific device
     if (phy_addr != nullptr){
