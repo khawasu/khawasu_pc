@@ -2,9 +2,10 @@
 // Created by ameharu on 06.02.2024.
 //
 #include <iostream>
+#include <logical_device.h>
+#include <types.h>
+
 #include "c_api.h"
-#include "../../SmartHome/khawasu/khawasu_core/logical_device.h"
-#include "../../SmartHome/thirdparties/fresh/main/platform/common_api.h"
 
 
 int main() {
