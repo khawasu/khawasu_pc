@@ -34,6 +34,7 @@ set(KHAWASU_PC_SRCS ${KHAWASU_PC_SRCS} device_info.cpp phy_device_manager.cpp lo
 
 add_executable(hwctrl main.cpp ${KHAWASU_PC_SRCS} arg_parser.h khawasu_app.cpp khawasu_app.h config.h)
 add_executable(khawasu_pc_client main_client.cpp ${KHAWASU_PC_SRCS} arg_parser.h)
+add_executable(khawasu_capi_test khawasu_capi_test.cpp c_api.cpp ${KHAWASU_PC_SRCS})
 
 add_library(khawasu_pc STATIC ${KHAWASU_PC_SRCS})
 add_library(khawasu_capi SHARED c_api.cpp ${KHAWASU_PC_SRCS})
@@ -43,13 +44,23 @@ target_include_directories(khawasu_pc PUBLIC "./" "socket/")
 # Add TomlPlusPlus
 target_include_directories(hwctrl PUBLIC thirdparties/tomlplusplus/)
 
-target_link_libraries(hwctrl PUBLIC ${KHAWASU_PC_LIBS})
+target_link_libraries(hwctrl PUBLIC ${KHAWASU_PC_LIBS} comctl32)
 target_link_libraries(khawasu_pc_client PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_pc PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_capi PUBLIC -static ${KHAWASU_PC_LIBS})
+target_link_libraries(khawasu_capi_test PUBLIC ${KHAWASU_PC_LIBS})
 
-# target_link_options(hwctrl PUBLIC -static -static-libgcc -static-libstdc++)
 
+target_compile_definitions(khawasu_pc PUBLIC KHAWASU_ENABLE_REFLECTION)
 target_compile_definitions(hwctrl PUBLIC KHAWASU_ENABLE_REFLECTION)
+target_compile_definitions(khawasu_capi PUBLIC KHAWASU_ENABLE_REFLECTION)
+target_compile_definitions(khawasu_capi_test PUBLIC KHAWASU_ENABLE_REFLECTION)
 
-add_compile_options(-fdiagnostics-color=always)
+# Add Mess
+#set(MESS_DIRECTORY "${KHAWASU_ROOT}\\thirdparties\\Mess")
+#set(MESS_SOURCE "${KHAWASU_ROOT}\\khawasu\\khawasu_esp32_devices\\messages\\messages.ini")
+#set(MESS_TARGET "${CMAKE_SOURCE_DIR}\\messages.cpp")
+#
+#include(${MESS_DIRECTORY}/CMakeLists.txt)
+#
+#add_dependencies(hwctrl mess)

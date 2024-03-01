@@ -40,7 +40,7 @@ struct Config {
     bool debug = false;
 };
 
-static inline bool perform_config_toml(Config& app_config) {
+static inline bool perform_config_toml(Config& app_config){
     toml::table config;
     try {
         config = toml::parse_file(app_config.config_path);
@@ -49,23 +49,22 @@ static inline bool perform_config_toml(Config& app_config) {
         return false;
     }
 
-    if (config["fresh"]["addr"].is_integer()) app_config.network_addr = config["fresh"]["addr"].value_or(0);
-    if (config["fresh"]["net"].is_string()) app_config.network_name = config["fresh"]["net"].value_or("");
-    if (config["fresh"]["psk"].is_string()) app_config.network_psk = config["fresh"]["psk"].value_or("");
+    app_config.network_addr = config["fresh"]["addr"].value_or(0);
+    app_config.network_name = config["fresh"]["net"].value_or("");
+    app_config.network_psk = config["fresh"]["psk"].value_or("");
 
     auto interfaces = config["fresh"]["interfaces"].as<toml::table>();
-    for (auto& [_interface_type, _interfaces]: *interfaces) {
+    for(auto& [_interface_type, _interfaces] : *interfaces){
         auto interface_type = std::string(_interface_type.str());
-        std::transform(interface_type.begin(), interface_type.end(), interface_type.begin(),
-                       [](unsigned char c) { return std::tolower(c); });
+        std::transform(interface_type.begin(), interface_type.end(), interface_type.begin(), [](unsigned char c){ return std::tolower(c); });
 
-        for (auto& [key, value]: *_interfaces.as_table()) {
+        for(auto& [key, value] : *_interfaces.as_table()) {
             auto valueTable = *value.as_table();
 
             if (interface_type == "socket") {
                 app_config.socket_interfaces.emplace_back("server" == valueTable["type"],
-                                                          valueTable["host"].value_or(""),
-                                                          valueTable["port"].value_or(0));
+                                                         valueTable["host"].value_or(""),
+                                                         valueTable["port"].value_or(0));
             } else if (interface_type == "com") {
                 app_config.com_devices.emplace_back(valueTable["path"].value_or(""), valueTable["baud"].value_or(0));
             }

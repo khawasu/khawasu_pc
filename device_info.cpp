@@ -1,7 +1,8 @@
 #include <iostream>
 #include "device_info.h"
+#include "phy_device_manager.h"
 
-LogDeviceInfo::LogDeviceInfo(MeshProto::far_addr_t phy_, LogicalPacket* packet) {
+LogDeviceInfo::LogDeviceInfo(PhyDeviceManager* _manager, MeshProto::far_addr_t phy_, LogicalPacket* packet) : manager(_manager) {
     phy = phy_;
     log = packet->src_addr;
     dev_class = packet->hello_world.device_class;
@@ -31,4 +32,21 @@ LogDeviceInfo::LogDeviceInfo(MeshProto::far_addr_t phy_, LogicalPacket* packet) 
 
         action_ptr = (HelloWorldPacket::ActionData*) &action_ptr->name[action_ptr->name_length];
     }
+}
+
+ActionExecuteStatus LogDeviceInfo::execute_action(ushort action_id, std::vector<ubyte> buffer, bool require_status)  {
+    return manager->execute_action(phy, log, action_id, std::move(buffer), require_status);
+}
+
+ActionExecuteStatus LogDeviceInfo::execute_action(const char* action_name, std::vector<ubyte> buffer, bool require_status)  {
+    return manager->execute_action(phy, log, action_name, std::move(buffer), require_status);
+}
+
+
+ActionResponse* LogDeviceInfo::fetch_action(ushort action_id, std::vector<ubyte> buffer) {
+    return manager->fetch_action(phy, log, action_id, std::move(buffer));
+}
+
+ActionResponse* LogDeviceInfo::fetch_action(const char* action_name, std::vector<ubyte> buffer) {
+    return manager->fetch_action(phy, log, action_name, std::move(buffer));
 }

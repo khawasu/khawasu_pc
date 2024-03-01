@@ -13,7 +13,7 @@ KhawasuApp::KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t fresh
                      :  fresh_network_name(std::move(freshNetworkName)), fresh_network_addr(freshNetworkAddr),
                         fresh_network_psk(std::move(freshNetworkPsk)) {
 
-    std::cout << ":: Fresh network :: \"" << fresh_network_name << "\" by PSK with address = " << fresh_network_addr << std::endl;
+    std::cout << ":: Fresh network :: \"" << fresh_network_name << "\" by PSK \"" << fresh_network_psk << "\" with address = " << fresh_network_addr << std::endl;
 
     controller = new MeshController(fresh_network_name.c_str(), fresh_network_addr);
     g_fresh_mesh = controller;
@@ -29,13 +29,13 @@ KhawasuApp::KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t fresh
 }
 
 void KhawasuApp::register_fresh_com_device(std::string& path, int boudrate) {
-    // todo: add unixserial
+    // fixme: memory leak
     #if(WIN32)
-    Win32Serial serial(path.c_str(), boudrate);
+    auto serial = new Win32Serial(path.c_str(), boudrate);
     #elif(__unix__)
-    UnixSerial serial(path.c_str(), boudrate);
+    auto serial = new UnixSerial(path.c_str(), boudrate);
     #endif
-    interfaces.push_back(new P2PUnsecuredShortInterface(true, false, serial, serial));
+    interfaces.push_back(new P2PUnsecuredShortInterface(true, false, *serial, *serial));
     Os::sleep_milliseconds(1000);
     controller->add_interface(interfaces.back());
 
@@ -44,6 +44,7 @@ void KhawasuApp::register_fresh_com_device(std::string& path, int boudrate) {
 
 void KhawasuApp::register_fresh_socket_server(std::string& hostname, uint16_t port) {
     try {
+        // fixme: memory leak
         interfaces.push_back(new MeshSocketInterface(hostname, port, true));
         controller->add_interface(interfaces.back());
 
@@ -55,6 +56,7 @@ void KhawasuApp::register_fresh_socket_server(std::string& hostname, uint16_t po
 
 void KhawasuApp::register_fresh_socket_client(std::string& hostname, uint16_t port) {
     try {
+        // fixme: memory leak
         interfaces.push_back(new MeshSocketInterface(hostname, port, false));
         controller->add_interface(interfaces.back());
 

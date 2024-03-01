@@ -25,12 +25,18 @@ void Socket::Create(std::string addr, ushort port) {
     int optval = 1;
     setsockopt(*_handle, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
 
-    if (bind(*(int*)GetHandle(), (struct sockaddr*) &_addr, sizeof(_addr)) < 0) {
+    if (bind(*_handle, (struct sockaddr*) &_addr, sizeof(_addr)) < 0) {
         perror("bind");
         exit(2);
     }
 
-    listen(*(int*)GetHandle(), 10);
+    int listenResult = 0;
+    if((listenResult = listen(*_handle, 10)) < 0) {
+        printf("Listen error %d\n", listenResult); fflush(stdout);
+        exit(2);
+    }
+
+    // printf("Listen result %d\n", listenResult); fflush(stdout);
 };
 
 SocketAddr_t Socket::Connect(std::string addr, ushort port) {
@@ -67,14 +73,18 @@ int Socket::GetStatus(SocketHandle_t sock_handle, int status, int microseconds)
 
     // zero seconds, zero milliseconds. max time select call allowd to block
     static timeval instantSpeedPlease = { 0, microseconds };
-    fd_set a = { 1, a_socket };
-    fd_set* read = ((status & 0x1) != 0) ? &a : NULL;
-    fd_set* write = ((status & 0x2) != 0) ? &a : NULL;
-    fd_set* except = ((status & 0x4) != 0) ? &a : NULL;
+    // fd_set a = { 1, a_socket };
+    fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(a_socket, &rfds);
+
+    fd_set* read = ((status & 0x1) != 0) ? &rfds : NULL;
+    fd_set* write = ((status & 0x2) != 0) ? &rfds : NULL;
+    fd_set* except = ((status & 0x4) != 0) ? &rfds : NULL;
     /*
     select returns the number of ready socket handles in the fd_set structure, zero if the time limit expired, or SOCKET_ERROR if an error occurred. WSAGetLastError can be used to retrieve a specific error code.
     */
-    int result = select(0, read, write, except, &instantSpeedPlease);
+    int result = select(a_socket + 1, read, write, except, &instantSpeedPlease);
     if (result == -1)
     {
         result = errno;

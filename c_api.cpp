@@ -1,7 +1,10 @@
 #include "c_api.h"
+
+#include <cstring>
+#include <iostream>
+
 #include <protocols/logical_proto.h>
 #include <protocols/overlay_proto.h>
-#include <cstring>
 #include <mesh_controller.h>
 #include <logical_device_manager.h>
 #include "interfaces/mesh_socket_interface.h"
@@ -19,11 +22,14 @@ typedef struct  {
     NEW_DEVICE_CALLBACK new_device_callback;
     ACTION_EXECUTE_CALLBACK action_execute_callback;
     ACTION_FETCH_CALLBACK action_fetch_callback;
+    ACTION_EXECUTE_RESULT_CALLBACK action_execute_result_callback;
+    ACTION_FETCH_RESULT_CALLBACK action_fetch_result_callback;
 } CONTEXT;
 
 
 // TODO: Make codegen
 extern "C" const char* dev_class_to_string(unsigned int dev_class) {
+    // KhawasuReflection::getAllDeviceClasses();
     switch ((LogicalProto::DeviceClassEnum) dev_class) {
         case LogicalProto::DeviceClassEnum::UNKNOWN:
             return "UNKNOWN";
@@ -190,20 +196,24 @@ inline void mesh_packet_handler(MeshProto::far_addr_t src_phy, const ubyte* data
 }
 
 
-MeshController* g_fresh_mesh = nullptr;
-
 extern "C" void* init_ctx(const char* network_name, unsigned int far_addr, const char* network_password,
                           const char* peer_ip_addr, unsigned short peer_port) {
     auto context = new CONTEXT();
+
     context->device_manager = new LogicalDeviceManager();
 
     auto controller = new MeshController(network_name, far_addr);
     g_fresh_mesh = controller;
     controller->set_psk_password(network_password);
-    controller->user_stream_handler = [context](MeshProto::far_addr_t src_addr, const ubyte* data, ushort size) {
-        printf("[%d] user_stream_handler\n", g_fresh_mesh->self_addr);
+    controller->callbacks.on_data_packet = [context](MeshProto::far_addr_t src_addr, const ubyte* data, ushort size) {
+        printf("[%d] user_stream_handler\n", g_fresh_mesh->self_addr._internal);
         mesh_packet_handler(src_addr, data, size, context);
     };
+    controller->new_peer_callback = [context](MeshProto::far_addr_t peer_far_addr) {
+        context->phy_device_manager->send_hello();
+    };
+
+    context->phy_device_manager = new PhyDeviceManager(context->device_manager);
 
     ((PhyDeviceManager*) context->phy_device_manager)->new_device_callback = [context](const LogDeviceInfo& dev) {
         if (context->new_device_callback == nullptr)
@@ -227,13 +237,25 @@ extern "C" void* init_ctx(const char* network_name, unsigned int far_addr, const
 
     };
 
-    MeshSocketInterface socket_interface(peer_ip_addr, peer_port, false);
-    controller->add_interface(&socket_interface);
+    ((PhyDeviceManager*) context->phy_device_manager)->action_callback = [context](const ActionResponse * ar) {
+        std::cout << "ACTION CALLBACK " << (uint) ar->type << "status = " << (uint) ar->status << "payload = " << ar->payload.size() << " bytes" << std::endl;
+        if (ar->type == ActionResponseType::EXECUTE && !!context->action_execute_result_callback) {
+            context->action_execute_result_callback(ar->req_id, (unsigned int) ar->status);
+        }
+
+        if (ar->type == ActionResponseType::FETCH && !!context->action_fetch_result_callback) {
+            context->action_fetch_result_callback(ar->req_id, (ubyte*) ar->payload.data(), ar->payload.size());
+        }
+    };
+
+    auto socket_interface = new MeshSocketInterface(peer_ip_addr, peer_port, false);
+    controller->add_interface(socket_interface);
 
     OverlayPacketBuilder::log_ovl_packet_alloc =
             new PoolMemoryAllocator<LOG_PACKET_POOL_ALLOC_PART_SIZE, LOG_PACKET_POOL_ALLOC_COUNT>();
 
-    context->phy_device_manager = new PhyDeviceManager(context->device_manager);
+    context->phy_device_manager->start();
+    // context->phy_device_manager->send_hello();
 
     return context;
 }
@@ -284,7 +306,7 @@ static ActionExecuteStatus action_handler_set(const char* name, ActionType type,
                                                                             (unsigned int) type, (void*) data);
 }
 
-extern "C" void create_device(void* ctx, unsigned int phy_addr, unsigned short log_addr, const char* name,
+extern "C" void create_device(void* ctx, unsigned short log_addr, const char* name,
                               unsigned int dev_class, ACTION* actions, size_t size) {
     auto phy_device_manager = ((CONTEXT*) ctx)->phy_device_manager;
 
@@ -300,6 +322,15 @@ extern "C" void create_device(void* ctx, unsigned int phy_addr, unsigned short l
     phy_device_manager->device_manager->add_device(dev);
 }
 
+extern "C" int execute_action_async(void* ctx, unsigned int dest_phy, unsigned short dest_log,
+                                       unsigned short src_log, const char* name, void* data, size_t data_size,
+                                       int require_result) {
+    auto man = ((CONTEXT*) ctx)->phy_device_manager;
+    auto data_ = (ubyte*) data;
+
+    return man->execute_action_async(dest_phy, dest_log, name, {data_, data_ + data_size}, require_result);
+}
+
 extern "C" unsigned int execute_action(void* ctx, unsigned int dest_phy, unsigned short dest_log,
                                        unsigned short src_log, const char* name, void* data, size_t data_size,
                                        int require_result) {
@@ -309,16 +340,26 @@ extern "C" unsigned int execute_action(void* ctx, unsigned int dest_phy, unsigne
     return (unsigned int) man->execute_action(dest_phy, dest_log, name, {data_, data_ + data_size}, require_result);
 }
 
-extern "C" void* fetch_action(void* ctx, unsigned int dest_phy, unsigned short dest_log, unsigned short src_log, const char* name,
-                   void* data, size_t data_size, size_t* out_size) {
+extern "C" int fetch_action_async(void* ctx, unsigned int dest_phy, unsigned short dest_log, unsigned short src_log,
+                   const char* name, void* data, size_t data_size) {
     auto man = ((CONTEXT*) ctx)->phy_device_manager;
     auto data_ = (ubyte*) data;
 
     // TODO: make specify src_phy
-    auto result = man->fetch_action(dest_phy, dest_log, name, {data_, data_ + data_size});
-    *out_size = result->size();
+    return man->fetch_action_async(dest_phy, dest_log, name, {data_, data_ + data_size});
+}
 
-    return result->data();
+extern "C" void* fetch_action(void* ctx, unsigned int dest_phy, unsigned short dest_log, unsigned short src_log,
+                   const char* name, void* data, size_t data_size, size_t* out_size) {
+    auto man = ((CONTEXT*) ctx)->phy_device_manager;
+    auto data_ = (ubyte*) data;
+
+    // TODO: make specify src_phy
+    auto resp = man->fetch_action(dest_phy, dest_log, name, {data_, data_ + data_size});
+
+    *out_size = resp->payload.size();
+
+    return resp->payload.data();
 }
 
 extern "C" void remove_device(void* ctx, unsigned short dev_port) {
@@ -332,3 +373,19 @@ extern "C" void deinit_ctx(void* ctx) {
     delete context->phy_device_manager;
 }
 
+extern "C" void register_callback_action_execute_result(void *ctx, ACTION_EXECUTE_RESULT_CALLBACK callback) {
+    auto context = (CONTEXT*) ctx;
+    context->action_execute_result_callback = callback;
+
+}
+
+extern "C" void register_callback_action_fetch_result(void *ctx, ACTION_FETCH_RESULT_CALLBACK callback) {
+    auto context = (CONTEXT*) ctx;
+    context->action_fetch_result_callback = callback;
+
+}
+
+extern "C" void check_packets(void *ctx) {
+    auto context = (CONTEXT*) ctx;
+    // MeshController::task_check_packets(g_fresh_mesh);
+}

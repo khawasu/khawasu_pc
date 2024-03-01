@@ -2,9 +2,9 @@
 #include <string>
 #include <mesh_protocol.h>
 #include <logical_device_manager.h>
-#include <platform/p2p/win32_p2p.h>
 #include <p2p_unsecured_short_interface.h>
 #include <iostream>
+#include "phy_device_manager.h"
 
 class KhawasuApp {
 public:
@@ -16,22 +16,29 @@ public:
 
     MeshController* controller;
     LogicalDeviceManager manager;
+    PhyDeviceManager* phy_manager = nullptr;
 
     std::vector<MeshInterface*> interfaces;
 
-    KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t freshNetworkAddr, std::string freshNetworkPsk);
+    KhawasuApp (std::string freshNetworkName, MeshProto::far_addr_t freshNetworkAddr, std::string freshNetworkPsk);
 
-    bool run() {
+    bool run () {
+        // MeshController::task_check_packets(g_fresh_mesh);
         return true;
     }
 
-    void register_fresh_com_device(std::string& path, int boudrate);
+    void before_run () {
+        phy_manager = new PhyDeviceManager(&manager);
+    }
 
-    void register_fresh_socket_server(std::string& hostname, uint16_t port);
+    void register_fresh_com_device (std::string& path, int boudrate);
 
-    void register_fresh_socket_client(std::string& hostname, uint16_t port);
+    void register_fresh_socket_server (std::string& hostname, uint16_t port);
 
-    static inline void mesh_packet_handler(MeshProto::far_addr_t src_phy, const ubyte* data, ushort size, void* user_data) {
+    void register_fresh_socket_client (std::string& hostname, uint16_t port);
+
+    static inline void mesh_packet_handler (MeshProto::far_addr_t src_phy, const ubyte* data, ushort size,
+                                            void* user_data) {
         using namespace LogicalProto;
         using namespace OverlayProto;
 
@@ -56,9 +63,13 @@ public:
             default: return;
         }
 
-        printf("[khawasu] New packet from %d to %d! %d bytes, type %hhu\n", log->src_addr, log->dst_addr, size, log->type);
+        printf("[khawasu] New packet from %d to %d! %d bytes, type %hhu\n", log->src_addr, log->dst_addr, size,
+               log->type);
         fflush(stdout);
 
-        ((LogicalDeviceManager*)user_data)->dispatch_packet(log, size, src_phy);
+        auto app = (KhawasuApp*) user_data;
+        app->manager.dispatch_packet(log, size, src_phy);
+        if (app->phy_manager)
+            app->phy_manager->handle_packet(src_phy, log, size);
     }
 };
