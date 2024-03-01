@@ -19,7 +19,7 @@ add_subdirectory(${KHAWASU_ROOT}/khawasu/khawasu_core ${CMAKE_BINARY_DIR}/khawas
 if (WIN32)
     message("WINDOWS detected")
     set(KHAWASU_PC_SRCS socket/winsocket.cpp)
-    set(KHAWASU_PC_LIBS ws2_32 winmm)
+    set(KHAWASU_PC_LIBS ws2_32 winmm comctl32)
 endif ()
 if (UNIX)
     message("UNIX detected")
@@ -44,7 +44,7 @@ target_include_directories(khawasu_pc PUBLIC "./" "socket/")
 # Add TomlPlusPlus
 target_include_directories(hwctrl PUBLIC thirdparties/tomlplusplus/)
 
-target_link_libraries(hwctrl PUBLIC ${KHAWASU_PC_LIBS} comctl32)
+target_link_libraries(hwctrl PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_pc_client PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_pc PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_capi PUBLIC -static ${KHAWASU_PC_LIBS})
