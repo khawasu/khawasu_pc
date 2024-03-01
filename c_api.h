@@ -3,7 +3,8 @@
 #define FFI_SCOPE "KHAWASU"
 #define FFI_LIBS "khawasu_capi"
 
-#include "stdint.h"
+#include <cstdint>
+#include <cstddef>
 
 #ifdef __cplusplus
 extern "C" {
