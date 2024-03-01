@@ -92,33 +92,33 @@ public:
 };
 
 int main(int argc, char* argv[]) {
-    ArgParser argParser;
-    argParser.process(argc, argv);
-
-    LogicalDeviceManager manager;
-
-    auto controller = new MeshController(argParser.network_name.c_str(), argParser.network_addr);
-    g_fresh_mesh = controller;
-    controller->set_psk_password(argParser.network_psk.c_str());
-    controller->user_stream_handler = [&manager](MeshProto::far_addr_t src_addr, const ubyte* data, ushort size) {
-        printf("[%d] user_stream_handler\n", g_fresh_mesh->self_addr);
-        mesh_packet_handler(src_addr, data, size, &manager);
-    };
-
-    MeshSocketInterface socket_interface(argParser.hostname, argParser.port, false);
-    controller->add_interface(&socket_interface);
-
-    OverlayPacketBuilder::log_ovl_packet_alloc =
-            new PoolMemoryAllocator<LOG_PACKET_POOL_ALLOC_PART_SIZE, LOG_PACKET_POOL_ALLOC_COUNT>();
-
-
-    DeviceRelay r(&manager, "Wow", 1124);
-
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
-    manager.add_device(&r);
-
-    std::this_thread::sleep_for(std::chrono::days(2));
+    // ArgParser argParser;
+    // argParser.process(argc, argv);
+    //
+    // LogicalDeviceManager manager;
+    //
+    // auto controller = new MeshController(argParser.network_name.c_str(), argParser.network_addr);
+    // g_fresh_mesh = controller;
+    // controller->set_psk_password(argParser.network_psk.c_str());
+    // controller->user_stream_handler = [&manager](MeshProto::far_addr_t src_addr, const ubyte* data, ushort size) {
+    //     printf("[%d] user_stream_handler\n", g_fresh_mesh->self_addr);
+    //     mesh_packet_handler(src_addr, data, size, &manager);
+    // };
+    //
+    // MeshSocketInterface socket_interface(argParser.hostname, argParser.port, false);
+    // controller->add_interface(&socket_interface);
+    //
+    // OverlayPacketBuilder::log_ovl_packet_alloc =
+    //         new PoolMemoryAllocator<LOG_PACKET_POOL_ALLOC_PART_SIZE, LOG_PACKET_POOL_ALLOC_COUNT>();
+    //
+    //
+    // DeviceRelay r(&manager, "Wow", 1124);
+    //
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    //
+    // manager.add_device(&r);
+    //
+    // std::this_thread::sleep_for(std::chrono::days(2));
 
     return 0;
 }

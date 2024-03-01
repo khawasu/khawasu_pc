@@ -12,15 +12,11 @@
 #include "logical_device.h"
 #include "logical_device_manager.h"
 
-#include "messages.cpp"
-
 #define DEV_CONTROLLER_NAME "Controller"
 #define DEV_MAN_RANGE_MIN 6000
 #define DEV_MAN_RANGE_MAX 7000
 #define DEV_CONTROLLER_PORT 5999
 #define DEV_MAN_RESPONSE_TIMEOUT 5'000'000
-
-struct PowerLevel;
 
 class DeviceController : public LogicalDevice {
 public:
@@ -30,40 +26,7 @@ public:
         : LogicalDevice(manager, name_, port_) {
     }
 
-    ActionExecuteStatus on_action_set(int action_id, const ubyte* data, uint size, LogicalAddress addr) override {
-        if (action_id == get_action_id("power_level")) {
-            if (size >= PowerLevel::get_alloc_size()) {
-                auto message = (PowerLevel *) data;
-                current_level = message->value();
-
-                return ActionExecuteStatus::SUCCESS;
-            }
-            return ActionExecuteStatus::ARGUMENTS_ERROR;
-        }
-
-        return ActionExecuteStatus::ACTION_NOT_FOUND;
-    }
-
-    void on_action_get(int action_id, const ubyte* data, uint size, LogicalAddress addr, ubyte request_id) override {
-        if (action_id == get_action_id("power_level")) {
-            auto log = dev_manager->alloc_logical_packet_ptr(addr, self_port,
-                                                             PowerLevel::get_alloc_size(),
-                                                             OverlayProto::OverlayProtoType::UNRELIABLE,
-                                                             LogicalPacketType::ACTION_RESPONSE);
-            PowerLevel::Initialize((std::int8_t *) &log.ptr()->action_response.payload[0]);
-
-            auto message = (PowerLevel *) &log.ptr()->action_response.payload[0];
-            message->value() = *current_level;
-
-            net_store(log.ptr()->action_response.request_id, request_id);
-            net_store(log.ptr()->action_response.status, ActionExecuteStatus::SUCCESS);
-
-            dev_manager->finish_ptr(log);
-        }
-    }
-
     OVERRIDE_DEV_CLASS(DeviceClassEnum::CONTROLLER);
-    OVERRIDE_ACTIONS({ActionType::RANGE, "power_level"})
 };
 
 typedef std::function<void(const LogDeviceInfo &)> NewDeviceCallback;

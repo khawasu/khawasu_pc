@@ -55,6 +55,7 @@ target_compile_definitions(khawasu_pc PUBLIC KHAWASU_ENABLE_REFLECTION)
 target_compile_definitions(hwctrl PUBLIC KHAWASU_ENABLE_REFLECTION)
 target_compile_definitions(khawasu_capi PUBLIC KHAWASU_ENABLE_REFLECTION)
 target_compile_definitions(khawasu_capi_test PUBLIC KHAWASU_ENABLE_REFLECTION)
+target_compile_definitions(khawasu_pc_client PUBLIC KHAWASU_ENABLE_REFLECTION)
 
 # Add Mess
 #set(MESS_DIRECTORY "${KHAWASU_ROOT}\\thirdparties\\Mess")
