@@ -3,8 +3,16 @@ project(khawasu_pc)
 
 set(CMAKE_CXX_STANDARD 23)
 set(FRESH_BUILD_SKIP_ESPIDF_COMPONENT 1)
+#set(FRESH_DISABLE_TRACING 1)
 set(FRESH_BUILD_SKIP_ESPIDF_STANDALONE 1)
 
+# Get latest git commit hash
+execute_process(
+        COMMAND git log -1 --format=%h
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        OUTPUT_VARIABLE GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 if(NOT DEFINED ENV{KHAWASU_ROOT})
     message(FATAL_ERROR "KHAWASU_ROOT environment variable is not defined")
@@ -24,6 +32,7 @@ endif ()
 if (UNIX)
     message("UNIX detected")
     set(KHAWASU_PC_SRCS socket/unixsocket.cpp)
+    set(KHAWASU_PC_LIBS pthread)
 endif ()
 
 set(KHAWASU_PC_SRCS ${KHAWASU_PC_SRCS} interfaces/mesh_socket_interface.cpp)
@@ -52,10 +61,11 @@ target_link_libraries(khawasu_capi_test PUBLIC ${KHAWASU_PC_LIBS})
 
 
 target_compile_definitions(khawasu_pc PUBLIC KHAWASU_ENABLE_REFLECTION)
-target_compile_definitions(hwctrl PUBLIC KHAWASU_ENABLE_REFLECTION)
+target_compile_definitions(hwctrl PUBLIC KHAWASU_ENABLE_REFLECTION GIT_HASH="${GIT_HASH}")
 target_compile_definitions(khawasu_capi PUBLIC KHAWASU_ENABLE_REFLECTION)
 target_compile_definitions(khawasu_capi_test PUBLIC KHAWASU_ENABLE_REFLECTION)
 target_compile_definitions(khawasu_pc_client PUBLIC KHAWASU_ENABLE_REFLECTION)
+
 
 # Add Mess
 #set(MESS_DIRECTORY "${KHAWASU_ROOT}\\thirdparties\\Mess")

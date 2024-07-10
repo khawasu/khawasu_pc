@@ -1,6 +1,6 @@
 [fresh]
 net = "dev network"
-psk = 1234
+psk = "1234"
 addr = 33221
 
 [fresh.interfaces]

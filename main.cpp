@@ -7,6 +7,10 @@
 #include "khawasu_app.h"
 #include "thirdparties/tomlplusplus/toml.hpp"
 
+#ifndef GIT_HASH
+#define GIT_HASH "unknown"
+#endif
+
 using namespace LogicalProto;
 using namespace OverlayProto;
 
@@ -44,7 +48,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::cout << ":: Khawasu Control Tool " << std::endl;
+    std::cout << ":: Khawasu Control Tool (" << GIT_HASH << ") " << std::endl;
 
     KhawasuApp app(app_config.network_name, app_config.network_addr, app_config.network_psk);
 
