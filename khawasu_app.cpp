@@ -21,7 +21,7 @@ KhawasuApp::KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t fresh
     controller->set_psk_password(fresh_network_psk.c_str());
 
     controller->user_stream_handler = [this](MeshProto::far_addr_t src_addr, const ubyte* data, ushort size) {
-        mesh_packet_handler(src_addr, data, size, &manager);
+        mesh_packet_handler(src_addr, data, size, this);
     };
 
     OverlayPacketBuilder::log_ovl_packet_alloc =
