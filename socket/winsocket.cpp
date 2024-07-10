@@ -16,27 +16,47 @@ void Socket::Create(std::string addr, ushort port) {
     // Creating socket file descriptor
     SOCKET _handle = socket(AF_INET, SOCK_STREAM, 0);
     if (_handle == INVALID_SOCKET) {
-        wprintf(L"socket function failed with error = %d\n", WSAGetLastError());
+        wchar_t *s = NULL;
+        FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       NULL, WSAGetLastError(),
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                       (LPWSTR)&s, 0, NULL);
+        fprintf(stderr, "Socket create failed: %S\n", s);
         exit(1);
     }
 
     unsigned long argp = 1;
     if (ioctlsocket(_handle, FIONBIO, &argp) == SOCKET_ERROR)
     {
-        printf("ioctlsocket() error %d\n", WSAGetLastError());
+        wchar_t *s = NULL;
+        FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       NULL, WSAGetLastError(),
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                       (LPWSTR)&s, 0, NULL);
+        fprintf(stderr, "ioctlsocket failed: %S\n", s);
         exit(1);
     }
 
     int bind_result = bind(_handle, reinterpret_cast<const sockaddr*>(&address), sizeof(address));
     if (bind_result == SOCKET_ERROR) {
-        wprintf(L"socket bind failed with error = %d\n", WSAGetLastError());
+        wchar_t *s = NULL;
+        FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       NULL, WSAGetLastError(),
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                       (LPWSTR)&s, 0, NULL);
+        fprintf(stderr, "Socket bind failed: %S\n", s);
         exit(1);
     }
 
     // Listen
     int iResult = listen(_handle, SOMAXCONN);
     if (iResult == SOCKET_ERROR) {
-        printf("listen failed with error: %d\n", WSAGetLastError());
+        wchar_t *s = NULL;
+        FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       NULL, WSAGetLastError(),
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                       (LPWSTR)&s, 0, NULL);
+        fprintf(stderr, "Listen failed: %S\n", s);
         Close();
         exit(1);
     }
@@ -59,14 +79,26 @@ SocketAddr_t Socket::Connect(std::string addr, ushort port) {
     inet_pton(AF_INET, addr.c_str(), &raw_ip_nbo); // IPv6 method of address acquisition
     if (raw_ip_nbo == INADDR_NONE)
     {
-        printf("inet_addr() error \"%s\"\n", addr.c_str());
+        wchar_t *s = NULL;
+        FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       NULL, WSAGetLastError(),
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                       (LPWSTR)&s, 0, NULL);
+        fprintf(stderr, "inet_addr for address (%s) failed: %S\n", addr.c_str(), s);
         return nullptr;
     }
 
     // Creating socket file descriptor
     SOCKET _handle = socket(AF_INET, SOCK_STREAM, 0);
     if (_handle == INVALID_SOCKET) {
-        wprintf(L"socket function failed with error = %d\n", WSAGetLastError());
+        wchar_t *s = NULL;
+        FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       NULL, WSAGetLastError(),
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                       (LPWSTR)&s, 0, NULL);
+        fprintf(stderr, "Socket create failed: %S\n", s);
+        LocalFree(s);
+
         return nullptr;
     }
 
@@ -75,7 +107,14 @@ SocketAddr_t Socket::Connect(std::string addr, ushort port) {
     int result = connect(_handle, (const sockaddr*)connection_address, sizeof(sockaddr_in));
 
     if(result == SOCKET_ERROR) {
-        printf("Can't connect to socket: %d\n", WSAGetLastError());
+        wchar_t *s = NULL;
+        FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                       NULL, WSAGetLastError(),
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                       (LPWSTR)&s, 0, NULL);
+        fprintf(stderr, "Can't connect to socket: %S\n", s);
+        LocalFree(s);
+
         return nullptr;
     }
 
