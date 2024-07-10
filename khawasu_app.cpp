@@ -11,7 +11,7 @@
 
 KhawasuApp::KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t freshNetworkAddr, std::string freshNetworkPsk)
                      :  fresh_network_name(std::move(freshNetworkName)), fresh_network_addr(freshNetworkAddr),
-                        fresh_network_psk(std::move(freshNetworkPsk)) {
+                        fresh_network_psk(std::move(freshNetworkPsk)), manager(LogicalDeviceManager()) {
 
     std::cout << ":: Fresh network :: \"" << fresh_network_name << "\" by PSK \"" << fresh_network_psk << "\" with address = " << fresh_network_addr << std::endl;
 
@@ -26,6 +26,9 @@ KhawasuApp::KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t fresh
 
     OverlayPacketBuilder::log_ovl_packet_alloc =
             new PoolMemoryAllocator<LOG_PACKET_POOL_ALLOC_PART_SIZE, LOG_PACKET_POOL_ALLOC_COUNT>();
+
+
+    phy_manager = new PhyDeviceManager(&manager);
 }
 
 void KhawasuApp::register_fresh_com_device(std::string& path, int boudrate) {

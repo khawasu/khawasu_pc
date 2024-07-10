@@ -28,7 +28,7 @@ public:
     }
 
     void before_run () {
-        phy_manager = new PhyDeviceManager(&manager);
+//        phy_manager = new PhyDeviceManager(&manager);
     }
 
     void register_fresh_com_device (std::string& path, int boudrate);
