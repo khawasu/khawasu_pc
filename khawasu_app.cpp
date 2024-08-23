@@ -20,7 +20,7 @@ KhawasuApp::KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t fresh
 
     controller->set_psk_password(fresh_network_psk.c_str());
 
-    controller->user_stream_handler = [this](MeshProto::far_addr_t src_addr, const ubyte* data, ushort size) {
+    controller->callbacks.on_data_packet = [this](MeshProto::far_addr_t src_addr, const ubyte* data, ushort size) {
         mesh_packet_handler(src_addr, data, size, this);
     };
 

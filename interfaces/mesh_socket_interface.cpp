@@ -77,7 +77,7 @@ bool MeshSocketInterface::accept_near_packet(MeshPhyAddrPtr phy_addr, const Mesh
     return true;
 }
 
-MeshProto::MeshPacket* MeshSocketInterface::alloc_near_packet(MeshProto::MeshPacketType type, uint size) {
+MeshProto::MeshPacket* MeshSocketInterface::alloc_near_packet(MeshProto::MeshPacketType type, uint size) const {
     auto ptr = (MeshProto::MeshPacket*) malloc(size);
     ptr->type = type;
 
@@ -87,14 +87,14 @@ MeshProto::MeshPacket* MeshSocketInterface::alloc_near_packet(MeshProto::MeshPac
 MeshProto::MeshPacket* MeshSocketInterface::realloc_near_packet(MeshProto::MeshPacket* packet,
                                                                 MeshProto::MeshPacketType old_type,
                                                                 MeshProto::MeshPacketType new_type,
-                                                                uint new_size) {
+                                                                uint new_size) const {
     auto ptr = (MeshProto::MeshPacket*) realloc(packet, new_size);
     ptr->type = new_type;
 
     return ptr;
 }
 
-void MeshSocketInterface::free_near_packet(MeshProto::MeshPacket* packet) {
+void MeshSocketInterface::free_near_packet(MeshProto::MeshPacket* packet) const {
     free(packet);
 }
 
@@ -130,7 +130,7 @@ void MeshSocketInterface::send_hello(MeshPhyAddrPtr phy_addr) {
     }
 }
 
-void MeshSocketInterface::write_addr_bytes(MeshPhyAddrPtr phy_addr, void* out_buf) {
+void MeshSocketInterface::write_addr_bytes(MeshPhyAddrPtr phy_addr, void* out_buf) const {
     memcpy(out_buf, phy_addr, sizeof(u64));
 }
 
