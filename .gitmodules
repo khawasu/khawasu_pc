@@ -1,3 +1,10 @@
 [submodule "thirdparties/tomlplusplus"]
 	path = thirdparties/tomlplusplus
 	url = https://github.com/marzer/tomlplusplus.git
+[submodule "thirdparties/Mess"]
+	path = thirdparties/Mess
+	url = https://github.com/ameharoo/Mess.git
+[submodule "thirdparties/cppzmq"]
+	path = thirdparties/cppzmq
+	url = https://github.com/zeromq/cppzmq.git
+	

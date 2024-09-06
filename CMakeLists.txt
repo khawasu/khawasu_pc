@@ -35,26 +35,43 @@ if (UNIX)
     set(KHAWASU_PC_LIBS pthread)
 endif ()
 
+# Add Mess
+set(MESS_CPP_HIGHLEVEL_API 1)
+set(MESS_DIRECTORY "${CMAKE_SOURCE_DIR}/thirdparties/Mess")
+set(MESS_SOURCE "${CMAKE_SOURCE_DIR}/protocol/Request.ini")
+set(MESS_TARGET "${CMAKE_SOURCE_DIR}/protocol/Request.h")
+
+include(${MESS_DIRECTORY}/CMakeLists.txt)
+
+# find_package(zeromq)
+find_package(cppzmq)
+# include("thirdparties/cppzmq/CMakeLists.txt")
+
 set(KHAWASU_PC_SRCS ${KHAWASU_PC_SRCS} interfaces/mesh_socket_interface.cpp)
 set(KHAWASU_PC_LIBS ${KHAWASU_PC_LIBS} fresh_static khawasu_core)
 
 # Add PhyDeviceManager
 set(KHAWASU_PC_SRCS ${KHAWASU_PC_SRCS} device_info.cpp phy_device_manager.cpp logical_callback_device.cpp)
 
-add_executable(hwctrl main.cpp ${KHAWASU_PC_SRCS} arg_parser.h khawasu_app.cpp khawasu_app.h config.h)
-add_executable(khawasu_pc_client main_client.cpp ${KHAWASU_PC_SRCS} arg_parser.h)
+add_executable(hwctrl main.cpp ${KHAWASU_PC_SRCS} arg_parser.h khawasu_app.cpp khawasu_app.h config.h ${MESS_TARGET}
+        protocol/daemon.cpp
+        protocol/daemon.h)
+add_executable(khawasu_pc_client main_client.cpp ${KHAWASU_PC_SRCS} arg_parser.h ${MESS_TARGET})
 add_executable(khawasu_capi_test khawasu_capi_test.cpp c_api.cpp ${KHAWASU_PC_SRCS})
 
 add_library(khawasu_pc STATIC ${KHAWASU_PC_SRCS})
 add_library(khawasu_capi SHARED c_api.cpp ${KHAWASU_PC_SRCS})
+
+add_dependencies(hwctrl mess)
+add_dependencies(khawasu_pc_client mess)
 
 target_include_directories(khawasu_pc PUBLIC "./" "socket/")
 
 # Add TomlPlusPlus
 target_include_directories(hwctrl PUBLIC thirdparties/tomlplusplus/)
 
-target_link_libraries(hwctrl PUBLIC ${KHAWASU_PC_LIBS})
-target_link_libraries(khawasu_pc_client PUBLIC ${KHAWASU_PC_LIBS})
+target_link_libraries(hwctrl PUBLIC ${KHAWASU_PC_LIBS} cppzmq)
+target_link_libraries(khawasu_pc_client PUBLIC ${KHAWASU_PC_LIBS} cppzmq)
 target_link_libraries(khawasu_pc PUBLIC ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_capi PUBLIC -static ${KHAWASU_PC_LIBS})
 target_link_libraries(khawasu_capi_test PUBLIC ${KHAWASU_PC_LIBS})
@@ -65,13 +82,3 @@ target_compile_definitions(hwctrl PUBLIC KHAWASU_ENABLE_REFLECTION GIT_HASH="${G
 target_compile_definitions(khawasu_capi PUBLIC KHAWASU_ENABLE_REFLECTION)
 target_compile_definitions(khawasu_capi_test PUBLIC KHAWASU_ENABLE_REFLECTION)
 target_compile_definitions(khawasu_pc_client PUBLIC KHAWASU_ENABLE_REFLECTION)
-
-
-# Add Mess
-#set(MESS_DIRECTORY "${KHAWASU_ROOT}\\thirdparties\\Mess")
-#set(MESS_SOURCE "${KHAWASU_ROOT}\\khawasu\\khawasu_esp32_devices\\messages\\messages.ini")
-#set(MESS_TARGET "${CMAKE_SOURCE_DIR}\\messages.cpp")
-#
-#include(${MESS_DIRECTORY}/CMakeLists.txt)
-#
-#add_dependencies(hwctrl mess)

@@ -1,6 +1,8 @@
 #include "khawasu_app.h"
 #include "interfaces/mesh_socket_interface.h"
 
+#include "thirdparties/cppzmq/zmq.hpp"
+
 #include <utility>
 
 #if(__unix__)
@@ -8,6 +10,7 @@
 #elif(WIN32)
 #include "platform/p2p/win32_p2p.h"
 #endif
+
 
 KhawasuApp::KhawasuApp(std::string freshNetworkName, MeshProto::far_addr_t freshNetworkAddr, std::string freshNetworkPsk)
                      :  fresh_network_name(std::move(freshNetworkName)), fresh_network_addr(freshNetworkAddr),
@@ -70,4 +73,3 @@ void KhawasuApp::register_fresh_socket_client(std::string& hostname, uint16_t po
         std::cerr << ":: Fresh Socket Client Error: " << e.what() << std::endl;
     }
 }
-
